@@ -1,0 +1,21 @@
+linters:
+  enable:
+    - gofmt
+    - asciicheck
+    - bodyclose
+    - dupl
+    - gocognit
+    - goconst
+    - gocritic
+    - goimports
+    - golint
+    - gosec
+    - lll
+    - nakedret
+    - nestif
+    - prealloc
+    - scopelint
+    - stylecheck
+    - unconvert
+    - unparam
+    - whitespace
