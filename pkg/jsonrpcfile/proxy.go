@@ -37,22 +37,22 @@ func NewProxy(
 	var inputFile *os.File
 	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
 		if inputFile, err = os.Create(inputFilePath); err != nil {
-			return nil, fmt.Errorf("create file: %w", err)
+			return nil, fmt.Errorf("create input file: %w", err)
 		}
 	} else {
 		if inputFile, err = os.Open(inputFilePath); err != nil {
-			return nil, fmt.Errorf("open file: %w", err)
+			return nil, fmt.Errorf("open input file: %w", err)
 		}
 	}
 
 	var outputFile *os.File
 	if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
 		if outputFile, err = os.Create(outputFilePath); err != nil {
-			return nil, fmt.Errorf("create file: %w", err)
+			return nil, fmt.Errorf("create output file: %w", err)
 		}
 	} else {
 		if outputFile, err = os.OpenFile(outputFilePath, os.O_APPEND|os.O_WRONLY, 0600); err != nil {
-			return nil, fmt.Errorf("open file: %w", err)
+			return nil, fmt.Errorf("open output file: %w", err)
 		}
 	}
 
