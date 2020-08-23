@@ -51,7 +51,7 @@ func NewProxy(
 			return nil, fmt.Errorf("create output file: %w", err)
 		}
 	} else {
-		if outputFile, err = os.OpenFile(outputFilePath, os.O_APPEND|os.O_WRONLY, 0600); err != nil {
+		if outputFile, err = os.OpenFile(outputFilePath, os.O_APPEND|os.O_WRONLY, os.ModeAppend); err != nil {
 			return nil, fmt.Errorf("open output file: %w", err)
 		}
 	}
@@ -78,7 +78,7 @@ func (w *Proxy) Run(ctx context.Context) error {
 	waitStream := make(chan struct{})
 	go func() {
 		wg.Wait()
-		<-waitStream
+		waitStream <- struct{}{}
 	}()
 
 	select {
