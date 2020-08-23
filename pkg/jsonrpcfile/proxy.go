@@ -96,11 +96,21 @@ func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan strin
 		defer wg.Done()
 		defer close(lineStream)
 		var size int64
+		var isSkippedOld bool
 		for {
 			stat, err := os.Stat(w.inputFilePath)
 			if err != nil {
 				w.errorStream <- fmt.Errorf("os stat input: %w", err)
 				return
+			}
+			if !isSkippedOld {
+				// Skip old lines
+				_, err = w.inputFile.Seek(stat.Size(), io.SeekStart)
+				if err != nil {
+					w.errorStream <- fmt.Errorf("seek input: %w", err)
+					return
+				}
+				isSkippedOld = true
 			}
 			if size == stat.Size() {
 				select {
@@ -108,14 +118,6 @@ func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan strin
 					return
 				case <-time.After(w.watchTimeout):
 					continue
-				}
-			}
-			if size == 0 {
-				// Skip old lines
-				_, err = w.inputFile.Seek(stat.Size(), io.SeekStart)
-				if err != nil {
-					w.errorStream <- fmt.Errorf("seek input: %w", err)
-					return
 				}
 			}
 			size = stat.Size()
