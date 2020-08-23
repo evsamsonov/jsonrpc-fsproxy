@@ -144,7 +144,7 @@ func (w *Proxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStream
 					return
 				}
 				wg.Add(1)
-				func() {
+				go func() {
 					defer wg.Done()
 					w.processLine(line)
 				}()
