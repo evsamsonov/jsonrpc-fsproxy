@@ -95,22 +95,20 @@ func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan strin
 	go func() {
 		defer wg.Done()
 		defer close(lineStream)
+
+		// Skip old lines
+		_, err := w.inputFile.Seek(0, io.SeekEnd)
+		if err != nil {
+			w.errorStream <- fmt.Errorf("seek input: %w", err)
+			return
+		}
+
 		var size int64
-		var isSkippedOld bool
 		for {
 			stat, err := os.Stat(w.inputFilePath)
 			if err != nil {
 				w.errorStream <- fmt.Errorf("os stat input: %w", err)
 				return
-			}
-			if !isSkippedOld {
-				// Skip old lines
-				_, err = w.inputFile.Seek(stat.Size(), io.SeekStart)
-				if err != nil {
-					w.errorStream <- fmt.Errorf("seek input: %w", err)
-					return
-				}
-				isSkippedOld = true
 			}
 			if size == stat.Size() {
 				select {
@@ -180,6 +178,7 @@ func (w *Proxy) processLine(line string) {
 
 	w.outputFileMutex.Lock()
 	defer w.outputFileMutex.Unlock()
+
 	if _, err := w.outputFile.Write(bodyBytes); err != nil {
 		w.logger.Error("Failed to write response", zap.Error(err))
 		return

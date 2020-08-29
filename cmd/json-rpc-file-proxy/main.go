@@ -20,8 +20,8 @@ func main() {
 	}
 	proxy, err := jsonrpcfile.NewProxy(
 		"http://127.0.0.1:8080/rpc",
-		"input.pipe",
-		"output.pipe",
+		"request.pipe",
+		"response.pipe",
 		1*time.Second,
 		logger,
 	)
