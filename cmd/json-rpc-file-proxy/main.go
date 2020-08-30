@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/evsamsonov/json-rpc-file-proxy/pkg/jsonrpcfile"
 	"go.uber.org/zap"
@@ -22,7 +21,6 @@ func main() {
 		"http://127.0.0.1:8080/rpc",
 		"request.pipe",
 		"response.pipe",
-		1*time.Second,
 		logger,
 	)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"go.uber.org/zap"
@@ -19,7 +18,6 @@ import (
 type Proxy struct {
 	inputFilePath   string
 	inputFile       *os.File
-	watchTimeout    time.Duration
 	outputFilePath  string
 	outputFile      *os.File
 	outputFileMutex sync.Mutex
@@ -33,7 +31,6 @@ func NewProxy(
 	rpcUrl string,
 	inputFilePath string,
 	outputFilePath string,
-	watchTimeout time.Duration,
 	logger *zap.Logger,
 ) (*Proxy, error) {
 	var inputFile *os.File
@@ -73,7 +70,6 @@ func NewProxy(
 		inputFilePath:  inputFilePath,
 		outputFile:     outputFile,
 		outputFilePath: outputFilePath,
-		watchTimeout:   watchTimeout,
 		logger:         logger,
 		errorStream:    make(chan error),
 		watcher:        watcher,
