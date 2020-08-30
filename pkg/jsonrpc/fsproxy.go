@@ -1,4 +1,4 @@
-package jsonrpcfile
+package jsonrpc
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Proxy struct {
+type FSProxy struct {
 	inputFilePath   string
 	inputFile       *os.File
 	outputFilePath  string
@@ -27,12 +27,12 @@ type Proxy struct {
 	watcher         *fsnotify.Watcher
 }
 
-func NewProxy(
+func NewFSProxy(
 	rpcUrl string,
 	inputFilePath string,
 	outputFilePath string,
 	logger *zap.Logger,
-) (*Proxy, error) {
+) (*FSProxy, error) {
 	var inputFile *os.File
 	if _, err := os.Stat(inputFilePath); os.IsNotExist(err) {
 		if inputFile, err = os.Create(inputFilePath); err != nil {
@@ -64,7 +64,7 @@ func NewProxy(
 		return nil, fmt.Errorf("watcher add: %w", err)
 	}
 
-	return &Proxy{
+	return &FSProxy{
 		rpcUrl:         rpcUrl,
 		inputFile:      inputFile,
 		inputFilePath:  inputFilePath,
@@ -76,7 +76,7 @@ func NewProxy(
 	}, nil
 }
 
-func (w *Proxy) Run(ctx context.Context) error {
+func (w *FSProxy) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 	lineStream := w.watchInput(ctx, &wg)
 	w.processLines(ctx, &wg, lineStream)
@@ -95,7 +95,7 @@ func (w *Proxy) Run(ctx context.Context) error {
 	}
 }
 
-func (w *Proxy) Close() error {
+func (w *FSProxy) Close() error {
 	err := w.inputFile.Close()
 	if err != nil {
 		return fmt.Errorf("close input file: %w", err)
@@ -111,7 +111,7 @@ func (w *Proxy) Close() error {
 	return nil
 }
 
-func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan string {
+func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 	lineStream := make(chan string)
 	wg.Add(1)
 	go func() {
@@ -151,7 +151,7 @@ func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan strin
 	return lineStream
 }
 
-func (w *Proxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStream <-chan string) {
+func (w *FSProxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStream <-chan string) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -173,7 +173,7 @@ func (w *Proxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStream
 	}()
 }
 
-func (w *Proxy) processLine(line string) {
+func (w *FSProxy) processLine(line string) {
 	resp, err := http.Post(w.rpcUrl, "Content-Type: application/json", strings.NewReader(line))
 	if err != nil {
 		w.logger.Error("Failed to send request", zap.Error(err))

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/evsamsonov/json-rpc-file-proxy/pkg/jsonrpcfile"
+	"github.com/evsamsonov/json-rpc-file-proxy/pkg/jsonrpc"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create logger: %v", err)
 	}
-	proxy, err := jsonrpcfile.NewProxy(
+	proxy, err := jsonrpc.NewFSProxy(
 		"http://127.0.0.1:8080/rpc",
 		"request.pipe",
 		"response.pipe",
