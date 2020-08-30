@@ -28,6 +28,11 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to create proxy", zap.Error(err))
 	}
+	defer func() {
+		if err := proxy.Close(); err != nil {
+			logger.Warn("Failed to close proxy", zap.Error(err))
+		}
+	}()
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())

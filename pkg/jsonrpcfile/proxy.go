@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +26,7 @@ type Proxy struct {
 	logger          *zap.Logger
 	rpcUrl          string
 	errorStream     chan error
+	watcher         *fsnotify.Watcher
 }
 
 func NewProxy(
@@ -56,6 +58,15 @@ func NewProxy(
 		}
 	}
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("new watcher: %w", err)
+	}
+	err = watcher.Add(inputFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("watcher add: %w", err)
+	}
+
 	return &Proxy{
 		rpcUrl:         rpcUrl,
 		inputFile:      inputFile,
@@ -65,12 +76,11 @@ func NewProxy(
 		watchTimeout:   watchTimeout,
 		logger:         logger,
 		errorStream:    make(chan error),
+		watcher:        watcher,
 	}, nil
 }
 
 func (w *Proxy) Run(ctx context.Context) error {
-	defer w.closeFiles()
-
 	var wg sync.WaitGroup
 	lineStream := w.watchInput(ctx, &wg)
 	w.processLines(ctx, &wg, lineStream)
@@ -89,6 +99,22 @@ func (w *Proxy) Run(ctx context.Context) error {
 	}
 }
 
+func (w *Proxy) Close() error {
+	err := w.inputFile.Close()
+	if err != nil {
+		return fmt.Errorf("close input file: %w", err)
+	}
+	err = w.outputFile.Close()
+	if err != nil {
+		return fmt.Errorf("close output file: %w", err)
+	}
+	err = w.watcher.Close()
+	if err != nil {
+		return fmt.Errorf("close watcher: %w", err)
+	}
+	return nil
+}
+
 func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 	lineStream := make(chan string)
 	wg.Add(1)
@@ -103,28 +129,26 @@ func (w *Proxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan strin
 			return
 		}
 
-		var size int64
 		for {
-			stat, err := os.Stat(w.inputFilePath)
-			if err != nil {
-				w.errorStream <- fmt.Errorf("os stat input: %w", err)
-				return
-			}
-			if size == stat.Size() {
-				select {
-				case <-ctx.Done():
+			select {
+			case event, ok := <-w.watcher.Events:
+				if !ok {
 					return
-				case <-time.After(w.watchTimeout):
-					continue
 				}
-			}
-			size = stat.Size()
-
-			scanner := bufio.NewScanner(w.inputFile)
-			for scanner.Scan() {
-				line := scanner.Text()
-				lineStream <- line
-				w.logger.Info("Sent new line", zap.String("line", line))
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					scanner := bufio.NewScanner(w.inputFile)
+					for scanner.Scan() {
+						line := scanner.Text()
+						lineStream <- line
+						w.logger.Info("Got new line", zap.String("line", line))
+					}
+				}
+			case err, ok := <-w.watcher.Errors:
+				if !ok {
+					return
+				}
+				w.errorStream <- fmt.Errorf("watcher errors: %w", err)
+				return
 			}
 		}
 	}()
@@ -161,7 +185,7 @@ func (w *Proxy) processLine(line string) {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			w.logger.Warn("Failed to close response body", zap.Error(err))
+			w.logger.Warn("Failed to Close response body", zap.Error(err))
 		}
 	}()
 	if resp.StatusCode != http.StatusOK {
@@ -182,14 +206,5 @@ func (w *Proxy) processLine(line string) {
 	if _, err := w.outputFile.Write(bodyBytes); err != nil {
 		w.logger.Error("Failed to write response", zap.Error(err))
 		return
-	}
-}
-
-func (w *Proxy) closeFiles() {
-	if err := w.inputFile.Close(); err != nil {
-		w.logger.Error("Failed to close input file", zap.Error(err))
-	}
-	if err := w.outputFile.Close(); err != nil {
-		w.logger.Error("Failed to close output file", zap.Error(err))
 	}
 }
