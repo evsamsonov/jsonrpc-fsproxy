@@ -1,5 +1,8 @@
 language: go
 
+go:
+  - '1.15.1'
+
 env: GO111MODULE=on
 
 # Skip the install step. Don't go get dependencies. Only build with the code
