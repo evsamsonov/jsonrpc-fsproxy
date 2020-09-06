@@ -22,13 +22,13 @@ type FSProxy struct {
 	outputFile      *os.File
 	outputFileMutex sync.Mutex
 	logger          *zap.Logger
-	rpcUrl          string
+	rpcURL          string
 	errorStream     chan error
 	watcher         *fsnotify.Watcher
 }
 
 func NewFSProxy(
-	rpcUrl string,
+	rpcURL string,
 	inputFilePath string,
 	outputFilePath string,
 	logger *zap.Logger,
@@ -65,7 +65,7 @@ func NewFSProxy(
 	}
 
 	return &FSProxy{
-		rpcUrl:         rpcUrl,
+		rpcURL:         rpcURL,
 		inputFile:      inputFile,
 		inputFilePath:  inputFilePath,
 		outputFile:     outputFile,
@@ -176,7 +176,7 @@ func (w *FSProxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStre
 }
 
 func (w *FSProxy) processLine(line string) {
-	resp, err := http.Post(w.rpcUrl, "Content-Type: application/json", strings.NewReader(line))
+	resp, err := http.Post(w.rpcURL, "Content-Type: application/json", strings.NewReader(line))
 	if err != nil {
 		w.logger.Error("Failed to send request", zap.Error(err))
 		return
