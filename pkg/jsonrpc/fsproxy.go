@@ -127,6 +127,8 @@ func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan str
 
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case event, ok := <-w.watcher.Events:
 				if !ok {
 					return

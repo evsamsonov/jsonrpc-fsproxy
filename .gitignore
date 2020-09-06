@@ -13,4 +13,5 @@
 
 .idea
 
-*.pipe
+dev/rpcin
+dev/rpcout
