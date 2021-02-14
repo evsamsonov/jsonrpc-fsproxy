@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"go.uber.org/zap"
@@ -134,6 +135,13 @@ func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan str
 					return
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
+					// Wait until the lock is free
+					for {
+						if _, err := os.Stat(w.inputFilePath + ".lock"); os.IsNotExist(err) {
+							break
+						}
+						<-time.After(100 * time.Millisecond)
+					}
 					scanner := bufio.NewScanner(w.inputFile)
 					for scanner.Scan() {
 						line := scanner.Text()
