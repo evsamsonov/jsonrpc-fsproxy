@@ -140,7 +140,11 @@ func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan str
 						if _, err := os.Stat(w.inputFilePath + ".lock"); os.IsNotExist(err) {
 							break
 						}
-						<-time.After(100 * time.Millisecond)
+						select {
+						case <-ctx.Done():
+							return
+						case <-time.After(100 * time.Millisecond):
+						}
 					}
 					scanner := bufio.NewScanner(w.inputFile)
 					for scanner.Scan() {
