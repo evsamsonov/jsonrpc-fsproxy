@@ -135,16 +135,8 @@ func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan str
 					return
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					// Wait until the lock is free
-					for {
-						if _, err := os.Stat(w.inputFilePath + ".lock"); os.IsNotExist(err) {
-							break
-						}
-						select {
-						case <-ctx.Done():
-							return
-						case <-time.After(100 * time.Millisecond):
-						}
+					if w.waitFreeLock(ctx) {
+						return
 					}
 					scanner := bufio.NewScanner(w.inputFile)
 					for scanner.Scan() {
@@ -163,6 +155,19 @@ func (w *FSProxy) watchInput(ctx context.Context, wg *sync.WaitGroup) <-chan str
 		}
 	}()
 	return lineStream
+}
+
+func (w *FSProxy) waitFreeLock(ctx context.Context) (done bool) {
+	for {
+		if _, err := os.Stat(w.inputFilePath + ".lock"); os.IsNotExist(err) {
+			return false
+		}
+		select {
+		case <-ctx.Done():
+			return true
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
 }
 
 func (w *FSProxy) processLines(ctx context.Context, wg *sync.WaitGroup, lineStream <-chan string) {
