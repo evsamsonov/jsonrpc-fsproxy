@@ -1,4 +1,4 @@
-module github.com/evsamsonov/json-rpc-file-proxy
+module github.com/evsamsonov/jsonrpc-fsproxy
 
 go 1.15
 

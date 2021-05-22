@@ -8,7 +8,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/evsamsonov/json-rpc-file-proxy/pkg/jsonrpc"
+	"github.com/evsamsonov/jsonrpc-fsproxy/pkg/jsonrpc"
 	"go.uber.org/zap"
 )
 
