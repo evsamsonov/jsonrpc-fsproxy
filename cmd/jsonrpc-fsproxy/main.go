@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -12,24 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	defaultInputFilePath  = "dev/rpcin"
-	defaultOutputFilePath = "dev/rpcout"
-)
-
 func main() {
-	rpcURL := os.Getenv("RPC_URL")
-	if rpcURL == "" {
-		log.Fatal("Environment var RPC_URL is empty")
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: jsonrpc-fsproxy [INPUT_FILE_PATH] [OUTPUT_FILE_PATH] [RPC_URL]")
+		os.Exit(1)
 	}
-	inputFilePath := os.Getenv("INPUT_FILE_PATH")
-	if inputFilePath == "" {
-		inputFilePath = defaultInputFilePath
-	}
-	outputFilePath := os.Getenv("OUTPUT_FILE_PATH")
-	if outputFilePath == "" {
-		outputFilePath = defaultOutputFilePath
-	}
+
+	inputFilePath, outputFilePath, rpcURL := os.Args[1], os.Args[2], os.Args[3]
 
 	logger, err := zap.NewDevelopment()
 	if err != nil {
