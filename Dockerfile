@@ -1,11 +1,8 @@
-FROM golang:1.15.1-alpine
+FROM golang:1.16.3-alpine
 
-RUN apk update && apk add git && apk add bash
+RUN apk update && apk add --no-cache git=2.30.2-r0
 
 WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
 COPY . .
-RUN go build -o jsonrpc-fsproxy ./cmd/jsonrpc-fsproxy
-
-CMD ["./jsonrpc-fsproxy"]
+RUN go mod download
+RUN go build -o jsonrpc-fsproxy .
