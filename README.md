@@ -1,6 +1,6 @@
 # jsonrpc-fsproxy
 
-It passes requests to [JSON-RPC](https://www.jsonrpc.org/specification) server via files
+It passes requests to [JSON-RPC](https://www.jsonrpc.org/specification) server via files.
 
 ## How it works
 
