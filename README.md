@@ -34,6 +34,12 @@ $ go get github.com/evsamsonov/jsonrpc-fsproxy
 $ jsonrpc-fsproxy input_file_path output_file_path http://rpc-url
 ```
 
+### Building for windows
+
+```shell
+GOOS=windows GOARCH=amd64 go build -o jsonrpc-fsproxy.exe main.go
+```
+
 ## Implementation of client
 
 Language  | Link 
